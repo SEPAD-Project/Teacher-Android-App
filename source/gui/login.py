@@ -34,9 +34,19 @@ def main(page: ft.Page):
     # Variables
     terms_accepted = ft.Ref[ft.Checkbox]()
     login_button = ft.Ref[ft.ElevatedButton]()
+    is_processing = ft.Ref[bool]()
+    is_processing.current = False
     
     def show_error(title, message):
-        """Show error message in snackbar"""
+        """Show error message in dialog"""
+        print("in show erorr")
+        print(is_processing.current)
+        if is_processing.current:
+            is_processing.current = False
+            login_button.current.text = "Login"
+            login_button.current.disabled = False
+            page.update()
+        
         dlg = ft.AlertDialog(
             title=ft.Text(title),
             content=ft.Text(message),
@@ -45,7 +55,7 @@ def main(page: ft.Page):
             title_padding=ft.padding.all(25),
         )
         page.open(dlg)
-
+        page.update()
     
     # Form validation
     def validate_form(e):
@@ -55,19 +65,27 @@ def main(page: ft.Page):
             terms_accepted.current.value
         ]):
             login_button.current.disabled = False
+            login_button.current.style.bgcolor = app_config['primary_color']
         else:
             login_button.current.disabled = True
+            login_button.current.style.bgcolor = ft.Colors.BLUE_300 
         page.update()
     
     # Login button action
     def login_clicked(e):
+        # Set processing state
+        is_processing.current = True
+        login_button.current.text = "Processing..."
+        login_button.current.disabled = True
+        page.update()
+        
         # Validate form fields
         if not national_code_field.value:
-            show_error("Empty filed", "Please enter your national code!")
+            show_error("Empty field", "Please enter your national code!")
             return
             
         if not password_field.value:
-            show_error("Empty filed", "Please enter your password")
+            show_error("Empty field", "Please enter your password")
             return
             
         if not terms_accepted.current.value:
@@ -87,7 +105,14 @@ def main(page: ft.Page):
                 
         except Exception as e:
             # Handle network/database errors
-            show_error(f"Connection error: {str(e)}")
+            show_error("Connection Error", f"An error occurred: {str(e)}")
+        finally:
+            print('in finally :{}'.format(is_processing.current))
+            if not is_processing.current:  # Only reset if not already reset by show_error
+                is_processing.current = False
+                login_button.current.text = "Login"
+                login_button.current.disabled = False
+                page.update()
     
     # UI Elements
     logo = ft.Image(
@@ -142,14 +167,14 @@ def main(page: ft.Page):
         width=400,
         height=50,
         disabled=True,
-        on_click=login_clicked,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=10),
-            bgcolor=app_config['primary_color'],
+            bgcolor=ft.Colors.BLUE_300,
             color=ft.Colors.WHITE,
             padding=15,
             elevation=5
-        )
+        ),
+        on_click=login_clicked
     )
     
     forgot_password = ft.TextButton(
@@ -194,4 +219,4 @@ def main(page: ft.Page):
     page.add(login_form)
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.AppView.WEB_BROWSER)
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=44444)
