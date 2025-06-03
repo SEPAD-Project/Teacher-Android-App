@@ -62,7 +62,36 @@ def verify_teacher(national_code: str, password: str) -> Optional[Tuple]:
             cursor.close()
             connection.close()
 
+def get_teacher_classes(teacher_id):
+    """Getting teacher classes"""
+    connection = create_db_connection()
+    if connection is None:
+        return None
+    try:
+        cursor = connection.cursor()
+        query = """
+            SELECT class_id FROM teacher_class
+            WHERE teacher_id = %s
+        """
+        cursor.execute(query, (teacher_id,))
+        teacher_classes = cursor.fetchall()
+
+        if teacher_classes:
+            class_ids = [class_id for (class_id,) in teacher_classes]
+            return [True, class_ids]  # valid data
+        else:
+            return [False, 0]  # invalid data
+        
+    except Error as e:
+        print(f"Database error: {e}")
+        return None
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
 if __name__ == "__main__":
-    uname = input("user: ")
-    password = input("password: ")
-    verify_teacher(national_code=uname, password=password)
+    # uname = input("user: ")
+    # password = input("password: ")
+    # verify_teacher(national_code=uname, password=password)
+    print(get_teacher_classes(1,))
