@@ -90,8 +90,38 @@ def get_teacher_classes(teacher_id):
             cursor.close()
             connection.close()
 
+def get_class_name(class_id):
+    """Getting class name"""
+    connection = create_db_connection()
+    if connection is None:
+        return None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+            SELECT id, class_name, school_id FROM classes
+            WHERE id = %s
+        """
+        cursor.execute(query, (class_id,))
+        class_info = cursor.fetchone()
+
+        if class_info:
+            return class_info # valid data
+        else:
+            return 0 # invalid data
+        
+    except Error as e:
+        print(f"Database error: {e}")
+        return None
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
 if __name__ == "__main__":
     # uname = input("user: ")
     # password = input("password: ")
     # verify_teacher(national_code=uname, password=password)
-    print(get_teacher_classes(1,))
+
+    # print(get_teacher_classes(1,))
+
+    print(get_class_name('1'))
