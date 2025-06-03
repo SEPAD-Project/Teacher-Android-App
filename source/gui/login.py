@@ -1,7 +1,5 @@
 import flet as ft
 import configparser
-import os
-
 from pathlib import Path
 import sys
 
@@ -37,6 +35,18 @@ def main(page: ft.Page):
     terms_accepted = ft.Ref[ft.Checkbox]()
     login_button = ft.Ref[ft.ElevatedButton]()
     
+    def show_error(title, message):
+        """Show error message in snackbar"""
+        dlg = ft.AlertDialog(
+            title=ft.Text(title),
+            content=ft.Text(message),
+            alignment=ft.alignment.center,
+            on_dismiss=lambda e: print("Dialog dismissed!"),
+            title_padding=ft.padding.all(25),
+        )
+        page.open(dlg)
+
+    
     # Form validation
     def validate_form(e):
         if all([
@@ -51,27 +61,33 @@ def main(page: ft.Page):
     
     # Login button action
     def login_clicked(e):
-        # Authenticate user
-        user = authenticate_user(national_code_field.value, password_field.value)
+        # Validate form fields
+        if not national_code_field.value:
+            show_error("Empty filed", "Please enter your national code!")
+            return
+            
+        if not password_field.value:
+            show_error("Empty filed", "Please enter your password")
+            return
+            
+        if not terms_accepted.current.value:
+            show_error("Agreement error", "Please accept the terms and conditions")
+            return
         
-        if user[0]:
-            # Successful login
-            teacher_name=user[1]['teacher_name']
-            teacher_family=user[1]['teacher_family']
-            teacher_national_code=user[1]['teacher_national_code']
-            teacher_password=user[1]['teacher_password']
-            lesson=user[1]['lesson']
-            user_id=user[1]['id']
-            show_dashboard(page, teacher_national_code, teacher_name+" "+teacher_family)
-        else:
-            # Failed login
-            page.snack_bar = ft.SnackBar(
-                content=ft.Text("Invalid national code or password!"),
-                bgcolor=ft.Colors.RED_400,
-                behavior=ft.SnackBarBehavior.FLOATING
-            )
-            page.snack_bar.open = True
-            page.update()
+        try:
+            # Authenticate user
+            user = authenticate_user(national_code_field.value, password_field.value)
+            
+            if user and user[0]:
+                # Successful login
+                show_dashboard(page, user[1])
+            else:
+                # Failed login
+                show_error("Invalid Credential", "Invalid username or password!")
+                
+        except Exception as e:
+            # Handle network/database errors
+            show_error(f"Connection error: {str(e)}")
     
     # UI Elements
     logo = ft.Image(

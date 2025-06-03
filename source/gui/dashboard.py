@@ -17,7 +17,7 @@ def read_app_config():
         'secondary_color': config['App']['SecondaryColor']
     }
 
-def show_dashboard(page: ft.Page, username: str, full_name: str):
+def show_dashboard(page: ft.Page, udata):
     """Show the dashboard after successful login"""
     # Read app config
     app_config = read_app_config()
@@ -26,7 +26,7 @@ def show_dashboard(page: ft.Page, username: str, full_name: str):
     page.clean()
     
     # Update page settings
-    page.title = f"Welcome {full_name}"
+    page.title = f"Welcome {udata['teacher_name'] + " "+ udata['teacher_family']}"
     page.theme_mode = ft.ThemeMode.LIGHT if app_config['theme'] == 'light' else ft.ThemeMode.DARK
     page.bgcolor = app_config['secondary_color']
     page.padding = 20
@@ -35,14 +35,14 @@ def show_dashboard(page: ft.Page, username: str, full_name: str):
     
     # Create dashboard content
     welcome_text = ft.Text(
-        f"Welcome, {full_name}!",
+        f"Welcome, {udata['teacher_name'] + " "+ udata['teacher_family']}!",
         size=28,
         weight=ft.FontWeight.BOLD,
         color=app_config['primary_color']
     )
     
     user_info = ft.Text(
-        f"National Code: {username}",
+        f"National Code: {udata['teacher_national_code']}",
         size=16,
         color=ft.Colors.BLUE_GREY_600
     )
