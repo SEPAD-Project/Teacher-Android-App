@@ -54,10 +54,15 @@ def main(page: ft.Page):
         # Authenticate user
         user = authenticate_user(national_code_field.value, password_field.value)
         
-        if user:
+        if user[0]:
             # Successful login
-            national_code, full_name = user
-            show_dashboard(page, national_code, full_name)
+            teacher_name=user[1]['teacher_name']
+            teacher_family=user[1]['teacher_family']
+            teacher_national_code=user[1]['teacher_national_code']
+            teacher_password=user[1]['teacher_password']
+            lesson=user[1]['lesson']
+            user_id=user[1]['id']
+            show_dashboard(page, teacher_national_code, teacher_name+" "+teacher_family)
         else:
             # Failed login
             page.snack_bar = ft.SnackBar(

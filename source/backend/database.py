@@ -41,17 +41,18 @@ def verify_teacher(national_code: str, password: str) -> Optional[Tuple]:
     try:
         cursor = connection.cursor(dictionary=True)
         query = """
-            SELECT teacher_name, teacher_family, teacher_national_code 
+            SELECT teacher_name, teacher_family, teacher_national_code, teacher_password, lesson, id
             FROM teachers 
             WHERE teacher_national_code = %s AND teacher_password = %s
         """
         cursor.execute(query, (national_code, password))
         teacher = cursor.fetchone()
-        
+        print(teacher)
+
         if teacher:
-            full_name = f"{teacher['teacher_name']} {teacher['teacher_family']}"
-            return (teacher['teacher_national_code'], full_name)
-        return None
+            return [True, teacher] # valid data
+        else:
+            return [False, 0] # invalid data
         
     except Error as e:
         print(f"Database error: {e}")
@@ -60,3 +61,8 @@ def verify_teacher(national_code: str, password: str) -> Optional[Tuple]:
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+if __name__ == "__main__":
+    uname = input("user: ")
+    password = input("password: ")
+    verify_teacher(national_code=uname, password=password)
