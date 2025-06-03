@@ -1,11 +1,13 @@
 import flet as ft
 import configparser
-
 from pathlib import Path
 import sys
+from threading import Thread
 
 project_root = Path(__file__).parent.parent 
 sys.path.append(str(project_root))
+
+from backend.database import get_teacher_classes, get_class_name
 
 def read_app_config():
     """Read app configuration from config.ini"""
@@ -19,6 +21,19 @@ def read_app_config():
 
 def show_dashboard(page: ft.Page, udata):
     """Show the dashboard after successful login"""
+    # getting class info
+    def update_class_drop_menu(udata):
+        # get class id
+        result = get_teacher_classes(udata['id'])
+        if result[0]: # if any class exists
+            class_ids = result[1]
+
+            class_info = []
+            for i in class_ids:
+                class_info.append(get_class_name(i)) # get class name by id and store in variable 
+            update_dropdown_options([i['class_name'] for i in class_info])
+            # show in drop menu
+
     # Read app config
     app_config = read_app_config()
     
@@ -125,6 +140,11 @@ def show_dashboard(page: ft.Page, udata):
         page.update()
     
     page.update_dropdown_options = update_dropdown_options
+
+    update_class = Thread(target=update_class_drop_menu, args=(udata,))
+    update_class.start()
+    update_class.join()
+    page.update()
 
 def back_to_login(page: ft.Page):
     """Return to login page"""
