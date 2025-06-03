@@ -1,10 +1,34 @@
 import flet as ft
+import configparser
+import os
+
+from pathlib import Path
+import sys
+
+project_root = Path(__file__).parent.parent 
+sys.path.append(str(project_root))
+
+from backend.auth import authenticate_user
+from gui.dashboard import show_dashboard
+
+def read_app_config():
+    """Read app configuration from config.ini"""
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return {
+        'theme': config['App']['Theme'],
+        'primary_color': config['App']['PrimaryColor'],
+        'secondary_color': config['App']['SecondaryColor']
+    }
 
 def main(page: ft.Page):
+    # Read app config
+    app_config = read_app_config()
+    
     # Page settings
-    page.title = "Login System"
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.bgcolor = "#f5f5f5"
+    page.title = "Teacher Login System"
+    page.theme_mode = ft.ThemeMode.LIGHT if app_config['theme'] == 'light' else ft.ThemeMode.DARK
+    page.bgcolor = app_config['secondary_color']
     page.padding = 20
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -16,7 +40,7 @@ def main(page: ft.Page):
     # Form validation
     def validate_form(e):
         if all([
-            username_field.value,
+            national_code_field.value,
             password_field.value,
             terms_accepted.current.value
         ]):
@@ -27,12 +51,22 @@ def main(page: ft.Page):
     
     # Login button action
     def login_clicked(e):
-        page.snack_bar = ft.SnackBar(
-            content=ft.Text(f"Welcome {username_field.value}!"),
-            bgcolor=ft.Colors.GREEN_400
-        )
-        page.snack_bar.open = True
-        page.update()
+        # Authenticate user
+        user = authenticate_user(national_code_field.value, password_field.value)
+        
+        if user:
+            # Successful login
+            national_code, full_name = user
+            show_dashboard(page, national_code, full_name)
+        else:
+            # Failed login
+            page.snack_bar = ft.SnackBar(
+                content=ft.Text("Invalid national code or password!"),
+                bgcolor=ft.Colors.RED_400,
+                behavior=ft.SnackBarBehavior.FLOATING
+            )
+            page.snack_bar.open = True
+            page.update()
     
     # UI Elements
     logo = ft.Image(
@@ -40,24 +74,24 @@ def main(page: ft.Page):
         width=90,
         height=90,
         fit=ft.ImageFit.CONTAIN,
-        color=ft.Colors.BLUE_700
+        color=app_config['primary_color']
     )
     
     header_text = ft.Text(
-        "Login to Your Account",
+        "Teacher Login System",
         size=24,
         weight=ft.FontWeight.BOLD,
-        color=ft.Colors.BLUE_700
+        color=app_config['primary_color']
     )
     
-    username_field = ft.TextField(
-        label="Username",
-        hint_text="Enter your username",
+    national_code_field = ft.TextField(
+        label="National Code",
+        hint_text="Enter your national code",
         width=400,
         border_radius=15,
         border_color=ft.Colors.BLUE_GREY_200,
-        focused_border_color=ft.Colors.BLUE_700,
-        prefix_icon=ft.Icons.PERSON,
+        focused_border_color=app_config['primary_color'],
+        prefix_icon=ft.Icons.BADGE,
         on_change=validate_form
     )
     
@@ -69,7 +103,7 @@ def main(page: ft.Page):
         can_reveal_password=True,
         border_radius=15,
         border_color=ft.Colors.BLUE_GREY_200,
-        focused_border_color=ft.Colors.BLUE_700,
+        focused_border_color=app_config['primary_color'],
         prefix_icon=ft.Icons.LOCK,
         on_change=validate_form
     )
@@ -77,7 +111,7 @@ def main(page: ft.Page):
     terms_checkbox = ft.Checkbox(
         ref=terms_accepted,
         label="I agree to the terms and conditions",
-        fill_color=ft.Colors.BLUE_700,
+        fill_color=app_config['primary_color'],
         on_change=validate_form
     )
     
@@ -90,7 +124,7 @@ def main(page: ft.Page):
         on_click=login_clicked,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=10),
-            bgcolor=ft.Colors.BLUE_700,
+            bgcolor=app_config['primary_color'],
             color=ft.Colors.WHITE,
             padding=15,
             elevation=5
@@ -99,13 +133,7 @@ def main(page: ft.Page):
     
     forgot_password = ft.TextButton(
         text="Forgot Password?",
-        style=ft.ButtonStyle(color=ft.Colors.BLUE_700)
-    )
-    
-    signup_text = ft.Row(
-        [ft.Text("Don't have an account?"), 
-         ft.TextButton("Sign Up", style=ft.ButtonStyle(color=ft.Colors.BLUE_700))],
-        alignment=ft.MainAxisAlignment.CENTER
+        style=ft.ButtonStyle(color=app_config['primary_color'])
     )
     
     # Create page
@@ -115,7 +143,7 @@ def main(page: ft.Page):
                 logo,
                 header_text,
                 ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-                username_field,
+                national_code_field,
                 password_field,
                 ft.Row( 
                     [terms_checkbox],
@@ -125,8 +153,7 @@ def main(page: ft.Page):
                 ft.Row( 
                     [forgot_password],
                     alignment=ft.MainAxisAlignment.CENTER
-                ),
-                signup_text
+                )
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15
@@ -145,4 +172,5 @@ def main(page: ft.Page):
     
     page.add(login_form)
 
-ft.app(target=main, view=ft.AppView.WEB_BROWSER)
+if __name__ == "__main__":
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER)
