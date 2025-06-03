@@ -30,73 +30,84 @@ def show_dashboard(page: ft.Page, udata):
     page.theme_mode = ft.ThemeMode.LIGHT if app_config['theme'] == 'light' else ft.ThemeMode.DARK
     page.bgcolor = app_config['secondary_color']
     page.padding = 20
-    page.vertical_alignment = ft.MainAxisAlignment.START
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     
-    # Create class dropdown
-    class_dropdown = ft.Dropdown(
-        label="Class List",
-        hint_text="Select a class",
-        value="updating",
-        options=[
-            ft.dropdown.Option("updating"),
-        ],
-        width=300,
-        autofocus=True,
-        border_color=app_config['primary_color'],
-        text_size=16,
-    )
-    
-    # Function to update dropdown options
-    def update_dropdown_options(new_options):
-        class_dropdown.options = [ft.dropdown.Option(opt) for opt in new_options]
-        class_dropdown.value = new_options[0] if new_options else "updating"
-        page.update()
-    
-    # Create dashboard content
+    # Welcome text
     welcome_text = ft.Text(
-        f"Welcome, {udata['teacher_name'] + ' '+ udata['teacher_family']}!",
-        size=28,
+        f"Welcome {udata['teacher_name'] + ' '+ udata['teacher_family']}",
+        size=24,
         weight=ft.FontWeight.BOLD,
-        color=app_config['primary_color']
+        color=app_config['primary_color'],
+        text_align=ft.TextAlign.CENTER
     )
     
-    user_info = ft.Text(
-        f"National Code: {udata['teacher_national_code']}",
-        size=16,
-        color=ft.Colors.BLUE_GREY_600
-    )
+    # Common dimensions
+    control_width = 400  # Same width for all controls
+    control_height = 50  # Same height for all controls
     
-    logout_btn = ft.ElevatedButton(
-        text="Logout",
-        width=200,
-        height=40,
-        on_click=lambda e: back_to_login(page),
+    # Class dropdown with instruction text
+    class_selector = ft.Column([
+        ft.Text("Select your class:", size=16, color=ft.Colors.GREY_700),
+        ft.Dropdown(
+            hint_text="Choose from list",
+            value="loading...",
+            options=[
+                ft.dropdown.Option("loading..."),
+            ],
+            width=control_width,
+            border_color=app_config['primary_color'],
+            text_size=16,
+            content_padding=10,
+        )
+    ], spacing=10)
+    
+    # Enter class button
+    enter_class_btn = ft.ElevatedButton(
+        text="Enter Classroom",
+        width=control_width,
+        height=control_height,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=10),
             bgcolor=app_config['primary_color'],
-            color=ft.Colors.WHITE
+            color=ft.Colors.WHITE,
+            padding=ft.padding.symmetric(horizontal=20)
         )
     )
     
+    # Logout button
+    logout_btn = ft.ElevatedButton(
+        text="Logout",
+        width=control_width,
+        height=control_height,
+        on_click=lambda e: back_to_login(page),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=10),
+            bgcolor=ft.Colors.RED_400,
+            color=ft.Colors.WHITE,
+            padding=ft.padding.symmetric(horizontal=20)
+        )
+    )
+    
+    # Main content container
     dashboard_content = ft.Container(
         ft.Column(
             [
-                ft.Divider(height=20),
-                class_dropdown,
-                ft.Divider(height=30),
                 welcome_text,
-                ft.Divider(height=20),
-                user_info,
-                ft.Divider(height=40),
+                ft.Container(height=40),
+                class_selector,
+                ft.Container(height=30),
+                enter_class_btn,
+                ft.Container(height=20),
                 logout_btn
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=0
         ),
-        padding=30,
+        padding=40,
         border_radius=15,
         bgcolor=ft.Colors.WHITE,
-        width=500,
+        width=650,
         shadow=ft.BoxShadow(
             spread_radius=1,
             blur_radius=15,
@@ -108,7 +119,12 @@ def show_dashboard(page: ft.Page, udata):
     page.add(dashboard_content)
     
     # Store the update function in page for external access
-    page.update_dropdown_options = lambda options: update_dropdown_options(options)
+    def update_dropdown_options(new_options):
+        class_selector.controls[1].options = [ft.dropdown.Option(opt) for opt in new_options]
+        class_selector.controls[1].value = new_options[0] if new_options else "loading..."
+        page.update()
+    
+    page.update_dropdown_options = update_dropdown_options
 
 def back_to_login(page: ft.Page):
     """Return to login page"""
@@ -120,20 +136,20 @@ if __name__ == "__main__":
     # Sample user data for testing
     sample_user_data = {
         "teacher_name": "John",
-        "teacher_family": "Doe",
+        "teacher_family": "Smith",
         "teacher_national_code": "1234567890"
     }
     
     def main(page: ft.Page):
         show_dashboard(page, sample_user_data)
         
-        # Example of updating dropdown after 3 seconds
+        # Example of updating dropdown after 2 seconds
         import threading
         def update_dropdown_later():
             import time
-            time.sleep(3)
-            page.update_dropdown_options(["Class A", "Class B", "Class C", "Class D"])
+            time.sleep(2)
+            page.update_dropdown_options(["Math Class", "Science Class", "Literature Class", "Language Class"])
         
         threading.Thread(target=update_dropdown_later, daemon=True).start()
     
-    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=44445)
+    ft.app(target=main)
