@@ -117,6 +117,32 @@ def get_class_name(class_id):
             cursor.close()
             connection.close()
 
+def get_students_list_by_class_code(class_id) :
+    """Getting students national codes list"""
+    connection = create_db_connection()
+    if connection is None:
+        return None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT id, student_national_code, student_name, student_family FROM students WHERE class_id = %s
+        """
+        cursor.execute(query, (class_id,))
+        students_list = cursor.fetchall()
+
+        if students_list:
+            return students_list # valid data
+        else:
+            return 0 # invalid data
+        
+    except Error as e:
+        print(f"Database error: {e}")
+        return None
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
 if __name__ == "__main__":
     # uname = input("user: ")
     # password = input("password: ")
@@ -124,4 +150,6 @@ if __name__ == "__main__":
 
     # print(get_teacher_classes(1,))
 
-    print(get_class_name('1'))
+    # print(get_class_name('1'))
+
+    print(get_students_list_by_class_code('1'))
