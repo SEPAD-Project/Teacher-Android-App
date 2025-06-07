@@ -206,7 +206,7 @@ class Dashboard:
         
         if selected_class:
             # Navigate to classroom details page
-            MainPage(self.page, selected_class, self.app_config)
+            MainPage(self.page, selected_class, self.app_config, self.user_data)
         else:
             print("No class selected or class not found")
 

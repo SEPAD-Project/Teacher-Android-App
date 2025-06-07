@@ -107,7 +107,6 @@ def main(page: ft.Page):
             # Handle network/database errors
             show_error("Connection Error", f"An error occurred: {str(e)}")
         finally:
-            print('in finally :{}'.format(is_processing.current))
             if not is_processing.current:  # Only reset if not already reset by show_error
                 is_processing.current = False
                 login_button.current.text = "Login"

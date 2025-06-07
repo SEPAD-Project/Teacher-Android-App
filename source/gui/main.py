@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 class MainPage:
     """Main page to show student attendance status in a table format"""
     
-    def __init__(self, page: ft.Page, selected_class: Dict, app_config: Dict):
+    def __init__(self, page: ft.Page, selected_class: Dict, app_config: Dict, user_data):
         self.page = page
         self.selected_class = selected_class
         self.app_config = app_config
+        self.user_data = user_data
         self.student_data = self._generate_sample_student_data()
         self._setup_page()
         self._create_ui()
