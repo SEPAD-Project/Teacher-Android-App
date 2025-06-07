@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 from threading import Thread
 from typing import Dict, List
+from main import MainPage
 
 # Add project root to path
 project_root = Path(__file__).parent.parent 
@@ -25,6 +26,7 @@ class Dashboard:
         self.page = page
         self.user_data = user_data
         self.app_config = self._read_app_config()
+        self.class_info: List[Dict] = []  # Store complete class information
         self._setup_page()
         self._create_ui()
         
@@ -102,12 +104,14 @@ class Dashboard:
             text="Enter Classroom",
             width=control_width,
             height=control_height,
+            on_click=self._handle_enter_classroom,
             style=ft.ButtonStyle(
                 shape=ft.RoundedRectangleBorder(radius=10),
                 bgcolor=self.app_config['primary_color'],
                 color=ft.Colors.WHITE,
                 padding=ft.padding.symmetric(horizontal=20)
-        ))
+            )
+        )
         
         self.logout_btn = ft.ElevatedButton(
             text="Logout",
@@ -119,7 +123,8 @@ class Dashboard:
                 bgcolor=ft.Colors.RED_400,
                 color=ft.Colors.WHITE,
                 padding=ft.padding.symmetric(horizontal=20)
-        ))
+            )
+        )
     
     def _assemble_dashboard(self):
         """Assemble all components into the main dashboard container"""
@@ -159,14 +164,15 @@ class Dashboard:
             
             if result[0]:  # If any class exists
                 class_ids = result[1]
-                class_info = []
+                self.class_info = []  # Reset class info
                 
                 # Get class names for each class id
                 for class_id in class_ids:
-                    class_info.append(get_class_name(class_id))
+                    class_data = get_class_name(class_id)
+                    self.class_info.append(class_data)  # Store complete class info
                 
                 # Update dropdown with class names
-                self._update_dropdown_options([info['class_name'] for info in class_info])
+                self._update_dropdown_options([info['class_name'] for info in self.class_info])
         
         # Start background thread
         update_thread = Thread(target=update_class_drop_menu)
@@ -181,7 +187,30 @@ class Dashboard:
         self.class_dropdown.options = [ft.dropdown.Option(opt) for opt in new_options]
         self.class_dropdown.value = new_options[0] if new_options else "No classes found"
         self.page.update()
-    
+
+    def _handle_enter_classroom(self, e):
+        """Handle Enter Classroom button click
+        
+        Args:
+            e: The event that triggered this callback
+        """
+        if not self.class_info:
+            print("No class information available")
+            return
+            
+        selected_class_name = self.class_dropdown.value
+        selected_class = next(
+            (cls for cls in self.class_info if cls['class_name'] == selected_class_name),
+            None
+        )
+        
+        if selected_class:
+            # Navigate to classroom details page
+            MainPage(self.page, selected_class, self.app_config)
+        else:
+            print("No class selected or class not found")
+
+
     def _back_to_login(self, e):
         """Return to login page
         
@@ -207,8 +236,8 @@ if __name__ == "__main__":
     # Sample user data for testing
     sample_user_data = {
         "id": 1,
-        "teacher_name": "John",
-        "teacher_family": "Smith",
+        "teacher_name": "mhrd",
+        "teacher_family": "njfi",
         "teacher_national_code": "1234567890"
     }
     
@@ -221,7 +250,14 @@ if __name__ == "__main__":
         def update_dropdown_later():
             import time
             time.sleep(2)
-            dashboard._update_dropdown_options(["Math Class", "Science Class", "Literature Class"])
+            # For testing, we'll mock some class info
+            dashboard.class_info = [
+                {
+                },
+                {
+                }
+            ]
+            dashboard._update_dropdown_options([info['class_name'] for info in dashboard.class_info])
         
         threading.Thread(target=update_dropdown_later, daemon=True).start()
     
