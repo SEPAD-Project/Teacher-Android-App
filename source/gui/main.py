@@ -1112,8 +1112,6 @@
 #     ft.app(target=main)
 
 
-
-
 import flet as ft
 from typing import Dict, List
 import random
@@ -1154,49 +1152,93 @@ class MainPage:
             })
         return students
     
-    def _create_header_row(self) -> ft.Row:
-        return ft.Row(
-            controls=[
-                ft.Container(
-                    content=ft.Text("Name", weight=ft.FontWeight.BOLD),
-                    expand=True,  # Use expand instead of fixed width
-                    padding=10,
-                    border=ft.border.all(1, self.app_config['primary_color'])),
-                ft.Container(
-                    content=ft.Text("Accuracy", weight=ft.FontWeight.BOLD),
-                    expand=True,
-                    padding=10,
-                    border=ft.border.all(1, self.app_config['primary_color'])),
-                ft.Container(
-                    content=ft.Text("Last Review", weight=ft.FontWeight.BOLD),
-                    expand=True,
-                    padding=10,
-                    border=ft.border.all(1, self.app_config['primary_color'])),
-            ],
-            spacing=0
-        )
+    def _create_header_row(self, is_portrait: bool) -> ft.Row:
+        if is_portrait:
+            return ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text("Name", weight=ft.FontWeight.BOLD),
+                        width=200,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                    ft.Container(
+                        content=ft.Text("Accuracy", weight=ft.FontWeight.BOLD),
+                        width=150,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                    ft.Container(
+                        content=ft.Text("Last Review", weight=ft.FontWeight.BOLD),
+                        width=150,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                ],
+                spacing=0
+            )
+        else:
+            return ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text("Name", weight=ft.FontWeight.BOLD),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                    ft.Container(
+                        content=ft.Text("Accuracy", weight=ft.FontWeight.BOLD),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                    ft.Container(
+                        content=ft.Text("Last Review", weight=ft.FontWeight.BOLD),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, self.app_config['primary_color'])),
+                ],
+                spacing=0
+            )
     
-    def _create_student_row(self, student: Dict) -> ft.Row:
-        return ft.Row(
-            controls=[
-                ft.Container(
-                    content=ft.Text(student['name']),
-                    expand=True,
-                    padding=10,
-                    border=ft.border.all(1, ft.Colors.GREY_300)),
-                ft.Container(
-                    content=ft.Text(student['accuracy']),
-                    expand=True,
-                    padding=10,
-                    border=ft.border.all(1, ft.Colors.GREY_300)),
-                ft.Container(
-                    content=ft.Text(student['last_review']),
-                    expand=True,
-                    padding=10,
-                    border=ft.border.all(1, ft.Colors.GREY_300)),
-            ],
-            spacing=0
-        )
+    def _create_student_row(self, student: Dict, is_portrait: bool) -> ft.Row:
+        if is_portrait:
+            return ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(student['name']),
+                        width=200,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                    ft.Container(
+                        content=ft.Text(student['accuracy']),
+                        width=150,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                    ft.Container(
+                        content=ft.Text(student['last_review']),
+                        width=150,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                ],
+                spacing=0
+            )
+        else:
+            return ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(student['name']),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                    ft.Container(
+                        content=ft.Text(student['accuracy']),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                    ft.Container(
+                        content=ft.Text(student['last_review']),
+                        expand=True,
+                        padding=10,
+                        border=ft.border.all(1, ft.Colors.GREY_300)),
+                ],
+                spacing=0
+            )
     
     def _create_back_button(self) -> ft.ElevatedButton:
         return ft.ElevatedButton(
@@ -1213,6 +1255,9 @@ class MainPage:
         )
     
     def _create_ui(self):
+        # Determine orientation
+        is_portrait = self.page.height > self.page.width
+        
         # Header with class info
         class_header = ft.Text(
             f"Class: {self.selected_class['class_name']}",
@@ -1223,25 +1268,51 @@ class MainPage:
         )
         
         # Create table
-        table_header = self._create_header_row()
-        student_rows = [self._create_student_row(student) for student in self.student_data]
+        table_header = self._create_header_row(is_portrait)
+        student_rows = [self._create_student_row(student, is_portrait) for student in self.student_data]
         
-        # Create scrollable table (vertical only)
-        table = ft.Column(
-            controls=[table_header] + student_rows,
-            spacing=0,
-            scroll=ft.ScrollMode.ALWAYS,
-            height=min(500, self.page.height - 250)
-        )
-        
-        # Table container - will expand to full width in landscape
-        table_container = ft.Container(
-            content=table,
-            border=ft.border.all(1, ft.Colors.GREY_300),
-            border_radius=5,
-            alignment=ft.alignment.top_center,
-            expand=True  # Expand to fill available width
-        )
+        if is_portrait:
+            # Portrait mode - fixed width with horizontal scrolling
+            table = ft.Column(
+                controls=[table_header] + student_rows,
+                spacing=0,
+                scroll=ft.ScrollMode.ALWAYS,
+                height=min(500, self.page.height - 250)
+            )
+            
+            table_container = ft.Container(
+                content=table,
+                width=520,
+                border=ft.border.all(1, ft.Colors.GREY_300),
+                border_radius=5
+            )
+            
+            # Horizontal scroll for portrait mode
+            scrollable_table = ft.Row(
+                [table_container],
+                scroll=ft.ScrollMode.ALWAYS,
+                width=self.page.width - 80
+            )
+            
+            table_content = scrollable_table
+        else:
+            # Landscape mode - full width expanding table
+            table = ft.Column(
+                controls=[table_header] + student_rows,
+                spacing=0,
+                scroll=ft.ScrollMode.ALWAYS,
+                height=min(500, self.page.height - 250)
+            )
+            
+            table_container = ft.Container(
+                content=table,
+                border=ft.border.all(1, ft.Colors.GREY_300),
+                border_radius=5,
+                alignment=ft.alignment.top_center,
+                expand=True
+            )
+            
+            table_content = table_container
         
         # Main content container
         content = ft.Container(
@@ -1249,7 +1320,7 @@ class MainPage:
                 [
                     class_header,
                     ft.Container(height=20),
-                    table_container,  # This will expand to full width
+                    table_content,
                     ft.Container(height=20),
                     self._create_back_button()
                 ],
@@ -1260,7 +1331,7 @@ class MainPage:
             padding=40,
             border_radius=15,
             bgcolor=ft.Colors.WHITE,
-            width=min(1200, self.page.width + 400),  # Wide container
+            width=min(1200, self.page.width + 400) if not is_portrait else min(600, self.page.width - 40),
             height=min(700, self.page.height - 40),
             shadow=ft.BoxShadow(
                 spread_radius=1,
