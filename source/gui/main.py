@@ -1,7 +1,7 @@
 import flet as ft
-from typing import Dict, List
-import random
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
+from backend.database import get_students_list_by_class_code
 
 class MainPage:
     """Main page to show student attendance status in a table format"""
@@ -11,9 +11,11 @@ class MainPage:
         self.selected_class = selected_class
         self.app_config = app_config
         self.user_data = user_data
-        self.student_data = self._generate_sample_student_data()
+        self.student_data = []  # Initialize empty student data
         self._setup_page()
-        self._create_ui()
+        
+        # Initialize table data
+        self.main_logic()
         
         # Add resize event handler
         self.page.on_resize = self._handle_resize
@@ -31,21 +33,70 @@ class MainPage:
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     
-    def _generate_sample_student_data(self) -> List[Dict]:
-        students = []
-        first_names = ["Ali", "Mohammad", "Ahmad", "Fatemeh", "Zahra", "Hossein", 
-                      "Reza", "Maryam", "Sara", "Narges"]
-        last_names = ["Mohammadi", "Ahmadi", "Alavi", "Hosseini", "Rahmani", 
-                     "Kazemi", "Salehi", "Moradi", "Gholami", "Karimi"]
+    def update_student_data(self, student_id: str, name: str, accuracy: str, last_review: str):
+        """
+        Update or add student data to the table
+        Args:
+            student_id: Student unique identifier
+            name: Student name
+            accuracy: Accuracy percentage
+            last_review: Last review date/time
+        """
+        # Check if student already exists
+        existing_student = next((s for s in self.student_data if s['id'] == student_id), None)
         
-        for i in range(30):
-            students.append({
-                "id": i + 1,
-                "name": f"{random.choice(first_names)} {random.choice(last_names)}",
-                "accuracy": f"{random.randint(50, 100)}%",
-                "last_review": (datetime.now() - timedelta(days=random.randint(1, 30))).strftime("%Y-%m-%d")
+        if existing_student:
+            # Update existing student
+            existing_student['name'] = name
+            existing_student['accuracy'] = accuracy
+            existing_student['last_review'] = last_review
+        else:
+            # Add new student
+            self.student_data.append({
+                'id': student_id,
+                'name': name,
+                'accuracy': accuracy,
+                'last_review': last_review
             })
-        return students
+        
+        # Refresh UI
+        self._create_ui()
+        self.page.update()
+    
+    def main_logic(self):
+        # .. get students national code list by class code
+        # .. translate nationals code to name
+        # .. set primary data (only names and non vaule for others)
+        # calculate_time_difference func 
+        # fetch message 
+        # if message was not 'No messages yet' check status code and generate final text and time
+        # manage accuracy data of each students 
+        # set the final data of eache students on the table
+        """
+        Main function to fetch and process student data safely
+        Handles potential errors to prevent crashes
+        """
+        try:
+            # Get students list from database
+            students_list = get_students_list_by_class_code(self.selected_class['id'])
+            
+            if students_list != 0:
+                # Process each student
+                for student in students_list:
+                    try:
+                        name = f"{student['student_name']+' '+student['student_family']}" 
+                        accuracy = "0%"  
+                        last_review = "Getting"
+                        
+                        # Update student data
+                        self.update_student_data(student, name, accuracy, last_review)
+                    
+                    except Exception as e:
+                        print(f"Error processing student {student}: {str(e)}")
+                        continue
+        
+        except Exception as e:
+            print(f"Error in main_logic: {str(e)}")
     
     def _create_header_row(self, is_portrait: bool) -> ft.Row:
         if is_portrait:
@@ -165,52 +216,56 @@ class MainPage:
             text_align=ft.TextAlign.CENTER
         )
         
-        # Create table
-        table_header = self._create_header_row(is_portrait)
-        student_rows = [self._create_student_row(student, is_portrait) for student in self.student_data]
-        
-        if is_portrait:
-            # Portrait mode - fixed width with horizontal scrolling
-            table = ft.Column(
-                controls=[table_header] + student_rows,
-                spacing=0,
-                scroll=ft.ScrollMode.ALWAYS,
-                height=min(500, self.page.height - 250)
-            )
+        # Create table only if we have student data
+        if self.student_data:
+            table_header = self._create_header_row(is_portrait)
+            student_rows = [self._create_student_row(student, is_portrait) for student in self.student_data]
             
-            table_container = ft.Container(
-                content=table,
-                width=520,
-                border=ft.border.all(1, ft.Colors.GREY_300),
-                border_radius=5
-            )
-            
-            # Horizontal scroll for portrait mode
-            scrollable_table = ft.Row(
-                [table_container],
-                scroll=ft.ScrollMode.ALWAYS,
-                width=self.page.width - 80
-            )
-            
-            table_content = scrollable_table
+            if is_portrait:
+                # Portrait mode - fixed width with horizontal scrolling
+                table = ft.Column(
+                    controls=[table_header] + student_rows,
+                    spacing=0,
+                    scroll=ft.ScrollMode.ALWAYS,
+                    height=min(500, self.page.height - 250)
+                )
+                
+                table_container = ft.Container(
+                    content=table,
+                    width=520,
+                    border=ft.border.all(1, ft.Colors.GREY_300),
+                    border_radius=5
+                )
+                
+                # Horizontal scroll for portrait mode
+                scrollable_table = ft.Row(
+                    [table_container],
+                    scroll=ft.ScrollMode.ALWAYS,
+                    width=self.page.width - 80
+                )
+                
+                table_content = scrollable_table
+            else:
+                # Landscape mode - full width expanding table
+                table = ft.Column(
+                    controls=[table_header] + student_rows,
+                    spacing=0,
+                    scroll=ft.ScrollMode.ALWAYS,
+                    height=min(500, self.page.height - 250)
+                )
+                
+                table_container = ft.Container(
+                    content=table,
+                    border=ft.border.all(1, ft.Colors.GREY_300),
+                    border_radius=5,
+                    alignment=ft.alignment.top_center,
+                    expand=True
+                )
+                
+                table_content = table_container
         else:
-            # Landscape mode - full width expanding table
-            table = ft.Column(
-                controls=[table_header] + student_rows,
-                spacing=0,
-                scroll=ft.ScrollMode.ALWAYS,
-                height=min(500, self.page.height - 250)
-            )
-            
-            table_container = ft.Container(
-                content=table,
-                border=ft.border.all(1, ft.Colors.GREY_300),
-                border_radius=5,
-                alignment=ft.alignment.top_center,
-                expand=True
-            )
-            
-            table_content = table_container
+            # Show empty state if no students
+            table_content = ft.Text("No students found", size=20)
         
         # Main content container
         content = ft.Container(
@@ -268,6 +323,6 @@ if __name__ == "__main__":
             'class_code': 'MATH101'
         }
         
-        MainPage(page, sample_class, app_config)
+        MainPage(page, sample_class, app_config, {})
     
     ft.app(target=main)
