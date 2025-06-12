@@ -4,6 +4,7 @@ from datetime import datetime
 from backend.database import get_students_list_by_class_code
 from backend.get_message import fetch_messages
 from time import sleep
+import threading
 
 class MainPage:
     """Main page to show student attendance status in a table format"""
@@ -16,8 +17,10 @@ class MainPage:
         self.student_data = []  # Initialize empty student data
         self._setup_page()
         
-        # Initialize table data
-        self.main_logic()
+        # Initialize table data in a separate thread
+        self.running = True
+        self.thread = threading.Thread(target=self.main_logic, daemon=True)
+        self.thread.start()
         
         # Add resize event handler
         self.page.on_resize = self._handle_resize
@@ -118,7 +121,7 @@ class MainPage:
         print(self.selected_class)
         print(students_list[0])
 
-        while True:
+        while self.running:  # Use self.running flag to control the loop
             for student in students_list:
                 try:
                     respond = fetch_messages(national_code=str(student['student_national_code']), 
@@ -386,6 +389,8 @@ class MainPage:
         )
     
     def _return_to_dashboard(self, e):
+        # Set running flag to False to stop the thread
+        self.running = False
         from gui.dashboard import show_dashboard
         show_dashboard(self.page, self.user_data)
 
