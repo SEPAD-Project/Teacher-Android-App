@@ -1,7 +1,9 @@
 import flet as ft
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict
+from datetime import datetime
 from backend.database import get_students_list_by_class_code
+from backend.get_message import fetch_messages
+from time import sleep
 
 class MainPage:
     """Main page to show student attendance status in a table format"""
@@ -30,6 +32,7 @@ class MainPage:
         self.page.title = f"Classroom: {self.selected_class['class_name']}"
         self.page.bgcolor = self.app_config['secondary_color']
         self.page.padding = 20
+        self.accuracy_dict = dict()
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     
@@ -63,15 +66,28 @@ class MainPage:
         self._create_ui()
         self.page.update()
     
+    def calculate_time_difference(self, input_time_str):
+        given_time = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now()
+
+        delta = current_time - given_time
+        delta_hours = delta.total_seconds() / 3600 
+        delta_min = delta.total_seconds() / 60
+        
+        if delta_hours >= 7:
+            return [False, "no record found"]
+        elif delta_hours < 7:
+            return [True, f'{delta_min:.2f}min ago']
+
     def main_logic(self):
         # .. get students national code list by class code
         # .. translate nationals code to name
         # .. set primary data (only names and non vaule for others)
-        # calculate_time_difference func 
-        # fetch message 
-        # if message was not 'No messages yet' check status code and generate final text and time
-        # manage accuracy data of each students 
-        # set the final data of eache students on the table
+        # .. calculate_time_difference func 
+        # .. fetch message 
+        # .. if message was not 'No messages yet' check status code and generate final text and time
+        # .. manage accuracy data of each students 
+        # .. set the final data of eache students on the table
         """
         Main function to fetch and process student data safely
         Handles potential errors to prevent crashes
@@ -82,14 +98,15 @@ class MainPage:
             
             if students_list != 0:
                 # Process each student
+                self.accuracy_dict = {student['id']:[0, 0, 0] for student in students_list}
                 for student in students_list:
                     try:
                         name = f"{student['student_name']+' '+student['student_family']}" 
                         accuracy = "0%"  
-                        last_review = "Getting"
+                        last_review = "N/A"
                         
                         # Update student data
-                        self.update_student_data(student, name, accuracy, last_review)
+                        self.update_student_data(student['id'], name, accuracy, last_review)
                     
                     except Exception as e:
                         print(f"Error processing student {student}: {str(e)}")
@@ -97,6 +114,70 @@ class MainPage:
         
         except Exception as e:
             print(f"Error in main_logic: {str(e)}")
+
+        print(self.selected_class)
+        print(students_list[0])
+
+        while True:
+            for student in students_list:
+                try:
+                    respond = fetch_messages(national_code=str(student['student_national_code']), 
+                                                school_code=str(self.selected_class['school_id']), 
+                                                class_code=str(self.selected_class['id']))
+                    if respond[0] :
+                        if respond[1] != 'No messages yet':
+                            code, message_time = str(respond[1]).split('|=|')[0], str(respond[1]).split('|=|')[1] 
+                            status, time = self.calculate_time_difference(message_time)
+                            if status :
+                                if code == '0':
+                                    final_message = f'Needs updated'
+                                elif code == '1':
+                                    final_message = f'Students goes-{time}'
+                                elif code == '2' :
+                                    final_message = f'Identity not confirmed-{time}'
+                                elif code == '3' :
+                                    final_message = f'Sleeping-{time}'
+                                elif code == '4':
+                                    final_message = f'Not looking-{time}'
+                                elif code == '5' :
+                                    final_message = f'Looking-{time}'
+                                elif code == 'absent':
+                                    final_message = f'Students goes-{time}'
+
+                                self.accuracy_data = self.accuracy_dict[student['id']] # list [sum, count, last time]
+                                if self.accuracy_data[2] != message_time:
+                                    self.accuracy_data[2] = message_time     # setting new time
+                                    self.accuracy_data[1] = int(self.accuracy_data[1]) + 1   # + count
+                                    if code == '5': # if looking
+                                        self.accuracy_data[0] += 1   # adding to sum
+                                    else: # if not looking
+                                        pass
+                                self.accuracy_rate = float((self.accuracy_data[0] / self.accuracy_data[1]) * 100).__round__(1)
+
+                                self.update_student_data(student_id=student['id'], 
+                                                        name=student['student_name']+' '+student['student_family'], 
+                                                        accuracy=str(self.accuracy_rate)+'%', 
+                                                        last_review=final_message)                        
+                            else:
+                                final_message = f'last seen long time ago'
+                                
+                                self.update_student_data(student_id=student['id'], 
+                                                        name=student['student_name']+' '+student['student_family'], 
+                                                        accuracy='N/A', 
+                                                        last_review=final_message)
+
+                        else:
+                            self.update_student_data(student_id=student['id'], 
+                                                        name=student['student_name']+' '+student['student_family'], 
+                                                        accuracy="N/A", 
+                                                        last_review='No messages yet')
+                    else:
+                        print('Error while getting last message')
+
+                except Exception as MainDataError:
+                    print(MainDataError)
+                    print('Error occured while proccesing student [{}] data'.format(student))
+            sleep(30)
     
     def _create_header_row(self, is_portrait: bool) -> ft.Row:
         if is_portrait:
