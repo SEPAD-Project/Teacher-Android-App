@@ -37,7 +37,7 @@ class Dashboard:
             Dictionary containing theme settings and colors
         """
         config = configparser.ConfigParser()
-        config.read('config.ini')
+        config.read('source//config.ini')
         return {
             'theme': config['App']['Theme'],
             'primary_color': config['App']['PrimaryColor'],
@@ -195,7 +195,6 @@ class Dashboard:
             e: The event that triggered this callback
         """
         if not self.class_info:
-            print("No class information available")
             return
             
         selected_class_name = self.class_dropdown.value

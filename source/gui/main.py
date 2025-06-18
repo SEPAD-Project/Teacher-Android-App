@@ -118,8 +118,6 @@ class MainPage:
         except Exception as e:
             print(f"Error in main_logic: {str(e)}")
 
-        print(self.selected_class)
-        print(students_list[0])
 
         while self.running:  # Use self.running flag to control the loop
             for student in students_list:
@@ -127,6 +125,8 @@ class MainPage:
                     respond = fetch_messages(national_code=str(student['student_national_code']), 
                                                 school_code=str(self.selected_class['school_id']), 
                                                 class_code=str(self.selected_class['id']))
+                    if respond == None:
+                        raise ConnectionError
                     if respond[0] :
                         if respond[1] != 'No messages yet':
                             code, message_time = str(respond[1]).split('|=|')[0], str(respond[1]).split('|=|')[1] 

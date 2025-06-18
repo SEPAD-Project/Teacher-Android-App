@@ -2,12 +2,16 @@ import requests
 import os 
 import configparser
 
-config_path = os.path.join(os.path.dirname(__file__), '../config.ini')
-config = configparser.ConfigParser()
-config.read(config_path)
+try:
+    config_path = os.path.join(os.path.dirname(__file__), '../config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_path)
 
-ip_address = config['Server']['IP']
-port = int(config['Server']['student_status_port'])
+    ip_address = config['Server']['IP']
+    port = int(config['Server']['student_status_port'])
+except Exception as e:
+        print("ERROR IN GET MESSAGE (Loading config) : ")
+        print(str(e))
 
 # server address 185.4.28.110
 server_url = f"http://{ip_address}:{port}"
@@ -36,19 +40,23 @@ def fetch_messages(national_code: str, school_code: str, class_code: str):
         >>> get_student_messages("invalid_code", '9999', "Non-existent Class")
         (False, "Student not found")
     """
-    response = requests.post(f"{server_url}/get_last_message", json={
-            "school_name": school_code,
-            "class_code": class_code,
-            "student_name": national_code
-    }, timeout=5)
-    if response.status_code == 200:
-        data = response.json()
-        return [True, data['message']]
-    elif response.status_code == 404:
-        data = response.json()
-        return [False, data['error']]
-    else:
-        return [False, 'Error']
+    try:
+        response = requests.post(f"{server_url}/get_last_message", json={
+                "school_name": school_code,
+                "class_code": class_code,
+                "student_name": national_code
+        }, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return [True, data['message']]
+        elif response.status_code == 404:
+            data = response.json()
+            return [False, data['error']]
+        else:
+            return [False, 'Error']
+    except Exception as e:
+        print("ERROR IN GET MESSAGE : ")
+        print(str(e))
         
 
 

@@ -12,7 +12,7 @@ from gui.dashboard import show_dashboard
 def read_app_config():
     """Read app configuration from config.ini"""
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('source//config.ini')
     return {
         'theme': config['App']['Theme'],
         'primary_color': config['App']['PrimaryColor'],
@@ -39,8 +39,6 @@ def main(page: ft.Page):
     
     def show_error(title, message):
         """Show error message in dialog"""
-        print("in show erorr")
-        print(is_processing.current)
         if is_processing.current:
             is_processing.current = False
             login_button.current.text = "Login"
@@ -217,5 +215,7 @@ def main(page: ft.Page):
     
     page.add(login_form)
 
-if __name__ == "__main__":
+def running():
     ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=44444)
+if __name__ == "__main__":
+    running()

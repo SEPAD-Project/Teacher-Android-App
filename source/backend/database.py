@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 def read_db_config():
     """Read database configuration from config.ini file"""
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('source//config.ini')
     
     return {
         'host': config['Database']['Host'],
@@ -47,7 +47,6 @@ def verify_teacher(national_code: str, password: str) -> Optional[Tuple]:
         """
         cursor.execute(query, (national_code, password))
         teacher = cursor.fetchone()
-        print(teacher)
 
         if teacher:
             return [True, teacher] # valid data
