@@ -1,4 +1,9 @@
-# SEPAD - Teacher App
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/SEPAD-Project/Teacher-Android-App/blob/main/README.md)
+[![fa](https://img.shields.io/badge/lang-fa-blue.svg)](https://github.com/SEPAD-Project/Teacher-Android-App/blob/main/README.fa.md)
+# SEPAD (The Persian acronym for Student Online Monitoring System) - Teacher-Android-App
+This repository is a part of the SEPAD project and was developed by [Abolfazl Rashidian](https://github.com/abolfazlrashidian) for students to enter the class and send their attention level to the server.
+
+Click [here](https://github.com/SEPAD-Project) to visit the SEPAD organization.
 
 ## Overview
 The Teacher Panel in SEPAD is a management interface that allows teachers to monitor students' attention levels in real-time during online classes. This panel collects data on their focus (through facial recognition and gaze analysis via webcam) and displays it on Android app.
@@ -17,19 +22,23 @@ git clone https://github.com/SEPAD-Project/Teacher-Android-App.git
 ```bash
 cd Teacher-android-app
 ```
-3. Install required dependencies:
+3. Create a virtual environment:
+```bash
+python -m venv .venv
+```
+4. Activate the virtual environment:
+```bash
+.venv\Scripts\activate.bat
+```
+5. Install required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Running the Application
-1. Open source folder:
+1. Run RUN.py file
 ```bash
-cd source
-```
-2. Run run.py file
-```bash
-python run.py
+python RUN.py
 ```
 
 ## Directory Structure
