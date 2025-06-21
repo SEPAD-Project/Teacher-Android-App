@@ -55,13 +55,6 @@ teacher-android-app/
 └── .gitignore                      # Git ignore file
 ```
 
-# 📝 Contribution  
-1. Fork the repository  
-2. Create feature branch (`git checkout -b feature/NewFeature`)  
-3. Commit changes (`git commit -m 'Add NewFeature'`)  
-4. Push to branch (`git push origin feature/NewFeature`)  
-5. Open a Pull Request  
-
 # 📬 Contact  
 **Email**: SepadOrganizations@gmail.com  
 **Issues**: [GitHub Issues](https://github.com/SEPAD-Project/Teacher-Android-App/issues)  

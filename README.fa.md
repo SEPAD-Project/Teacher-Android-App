@@ -38,7 +38,7 @@ pip install -r requirements.txt
 
 ## اجرای اپلیکیشن
 ```bash
-python run.py
+python RUN.py
 ```
 
 ## ساختار دایرکتوری
@@ -54,13 +54,6 @@ teacher-android-app/
 ├── README.md                       # Documentation
 └── .gitignore                      # Git ignore file
 ```
-
-# 📝 مشارکت  
-1. مخزن را فورک کنید
-2. یک شاخه جدید به نام feature بسازید(`git checkout -b feature/NewFeature`)  
-3. تغییرات را اعمل کنید (`git commit -m 'Add NewFeature'`)  
-4. در شاخه feature اپلود کنید (`git push origin feature/NewFeature`)  
-5. درخواست Pull باز کنید
 
 # 📬 تماس  
 **Email**: SepadOrganizations@gmail.com  
